@@ -1,0 +1,321 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Reset básico y estilos globales */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #202123; /* Fondo oscuro principal de ChatGPT */
+  color: #ececec;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* Contenedor principal de la aplicación */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 768px; /* Ancho similar a ChatGPT */
+  background-color: #343541; /* Color de fondo del área de chat */
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  position: relative; /* Para el footer */
+}
+
+.app-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  text-align: center; /* O a la izquierda si prefieres */
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #fff;
+}
+
+/* Área de chat y lista de mensajes */
+.chat-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 20px 20px 0 20px; /* Espacio para el input area */
+  display: flex;
+  flex-direction: column;
+}
+
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Espacio entre mensajes */
+}
+
+/* Contenedor de cada mensaje (wrapper) */
+.message-wrapper {
+  display: flex;
+  align-items: flex-start; /* Alinea el avatar con la parte superior de la burbuja */
+  gap: 10px;
+  max-width: 90%; /* Para que no ocupen todo el ancho */
+}
+
+.message-wrapper.user {
+  align-self: flex-end;
+  flex-direction: row-reverse; /* Invierte el orden para el usuario */
+}
+
+.message-wrapper.ai {
+  align-self: flex-start;
+}
+
+/* Avatares */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px; /* ChatGPT usa cuadrados redondeados pequeños */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: white;
+  flex-shrink: 0; /* Evita que se encoja */
+}
+
+.user-avatar {
+  background-color: #7e57c2; /* Un color para el usuario */
+}
+
+.ai-avatar {
+  background-color: #10a37f; /* Color logo OpenAI */
+}
+
+
+/* Burbuja de mensaje */
+.message-bubble {
+  padding: 10px 15px;
+  border-radius: 18px; /* Bordes redondeados */
+  line-height: 1.5;
+  word-wrap: break-word; /* Para que el texto largo no rompa el layout */
+  white-space: pre-wrap; /* Para respetar saltos de línea y espacios múltiples */
+}
+
+.user-bubble {
+  background-color: #2a4975; /* Un azul oscuro para el usuario */
+  color: #e0e0e0;
+  border-bottom-right-radius: 5px; /* Estilo "cola" */
+}
+
+.ai-bubble {
+  background-color: #444654; /* Gris oscuro para la IA */
+  color: #d1d5db;
+  border-bottom-left-radius: 5px; /* Estilo "cola" */
+}
+
+/* Indicador de "Escribiendo..." */
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px; /* Un poco más de padding para que se vea bien */
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: #b0b0b0;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+/* Área de entrada */
+.input-area-container {
+  padding: 15px 20px 10px 20px; /* Menos padding abajo */
+  background-color: #343541; /* Mismo que el chat area para continuidad */
+  border-top: 1px solid rgba(255,255,255,0.1);
+  width: calc(100% - 40px); /* Ajustar por padding */
+  margin: 0 auto; /* Centrar */
+  box-sizing: border-box;
+}
+
+.input-form {
+  display: flex;
+  align-items: flex-end; /* Alinea el botón con la base del textarea cuando crece */
+  background-color: #40414f; /* Fondo del input como en ChatGPT */
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1); /* Borde sutil */
+}
+
+.input-form textarea {
+  flex-grow: 1;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: #ececec;
+  font-size: 1em;
+  padding: 10px 5px; /* Ajustar padding interno */
+  resize: none; /* Evitar que el usuario lo redimensione manualmente */
+  max-height: 200px; /* Limitar altura máxima del textarea */
+  overflow-y: auto; /* Scroll si el contenido es muy largo */
+  line-height: 1.5;
+  min-height: 24px; /* Altura base de una línea */
+}
+
+.input-form textarea::placeholder {
+  color: #8e8ea0;
+}
+
+.send-button {
+  background-color: transparent; /* Se ve mejor si el contenedor tiene el color */
+  border: none;
+  color: #8e8ea0; /* Color del icono por defecto */
+  padding: 8px;
+  margin-left: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.send-button:not(:disabled):hover {
+  background-color: rgba(255,255,255,0.1);
+}
+.send-button:not(:disabled) {
+  color: #acacbe; /* Icono más visible cuando está activo */
+}
+
+.send-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.send-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Spinner para el botón de enviar mientras carga */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+
+.footer-text {
+  font-size: 0.75em;
+  color: #a0a0a0;
+  text-align: center;
+  margin-top: 10px; /* Espacio sobre el texto */
+  padding-bottom: 5px;
+}
+
+/* Scrollbar styling (opcional, para Webkit) */
+.chat-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-area::-webkit-scrollbar-track {
+  background: #202123;
+}
+
+.chat-area::-webkit-scrollbar-thumb {
+  background-color: #444654;
+  border-radius: 4px;
+}
+
+.chat-area::-webkit-scrollbar-thumb:hover {
+  background-color: #555764;
+}
+
+/* Media queries para pantallas pequeñas */
+@media (max-width: 768px) {
+  .app-container {
+    border-radius: 0;
+    box-shadow: none;
+    height: 100vh; /* Ocupar toda la altura en móviles */
+  }
+  .chat-area {
+    padding: 15px 10px 0 10px;
+  }
+  .input-area-container {
+    padding: 10px;
+    width: calc(100% - 20px);
+  }
+  .message-wrapper {
+      max-width: 95%;
+  }
+}

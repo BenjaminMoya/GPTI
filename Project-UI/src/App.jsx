@@ -3,7 +3,7 @@ import MessageList from './components/MessageList';
 import InputArea from './components/InputArea';
 import './App.css';
 
-// Icono simple de "Enviar" (puedes usar una librería de iconos como react-icons)
+// Icono simple de "Enviar" 
 const SendIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
@@ -37,14 +37,14 @@ function App() {
       };
       setMessages((prevMessages) => [...prevMessages, newAiMessage]);
       setIsLoading(false);
-    }, 1500 + Math.random() * 1000); // Retraso aleatorio para simular procesamiento
+    }, 1500 + Math.random() * 1000); // Retraso aleatorio para simular procesamiento, este se puede eliminar una vez se conecte con la API
   };
 
   return (
     <div className="app-container">
       <header className="app-header">
         <h1>Cientifico IA</h1>
-        {/* Aquí podrías añadir un botón de "Nuevo Chat" etc. */}
+        {/* Aquí iran nuevos botones o cuadros de dialogo */}
       </header>
       <div className="chat-area">
         <MessageList messages={messages} isLoading={isLoading} />

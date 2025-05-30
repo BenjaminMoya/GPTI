@@ -1,7 +1,10 @@
 # scientific_report_api/main.py
 from fastapi import FastAPI, HTTPException
-from .models import ScientificInput, ScientificReportOutput, LatexReadyOutput, ReportSection
-from .openai_utils import generate_scientific_text_from_openai
+from Redaction_API.models import ScientificInput, ScientificReportOutput, LatexReadyOutput, ReportSection
+from Redaction_API.openai_utils import generate_scientific_text_from_openai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(
     title="API de Generación de Informes Científicos",

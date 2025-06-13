@@ -12,13 +12,13 @@ if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY no encontrada en las variables de entorno.")
 
 client = OpenAI(
-  base_url="https://openrouter.ai/api/v1",
-  api_key=OPENROUTER_API_KEY,
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY,
 )
 
 def get_llm_completion(prompt_content: str, system_message: str = "Eres un asistente experto en redacción científica en LaTeX.") -> str:
     """
-    Obtiene una completación del modelo LLM de OpenRouter.
+    Obtiene una completación del modelo LLM de OpenRouter para uso en generación de textos LaTeX.
     """
     try:
         completion = client.chat.completions.create(
@@ -26,8 +26,8 @@ def get_llm_completion(prompt_content: str, system_message: str = "Eres un asist
                 "HTTP-Referer": YOUR_SITE_URL,
                 "X-Title": YOUR_SITE_NAME,
             },
-            model="deepseek/deepseek-r1-0528-qwen3-8b:free", # Modelo especificado
-            # model="mistralai/mistral-7b-instruct:free", # Alternativa si deepseek no funciona bien para español o LaTeX
+            extra_body={},  # Se deja explícito en caso de futuras expansiones
+            model="deepseek/deepseek-r1-0528:free",  # Modelo actualizado
             messages=[
                 {
                     "role": "system",
@@ -38,13 +38,12 @@ def get_llm_completion(prompt_content: str, system_message: str = "Eres un asist
                     "content": prompt_content
                 }
             ],
-            temperature=0.7, # Ajustar para creatividad vs factualidad
-            max_tokens=2000 # Ajustar según la longitud esperada de la sección
+            temperature=0.7,
+            max_tokens=2000
         )
         return completion.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error al llamar a la API de OpenRouter: {e}")
-        # Podrías retornar un texto de error o re-intentar
         return f"% Error al generar contenido: {e}"
 
     

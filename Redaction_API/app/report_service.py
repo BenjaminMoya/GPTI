@@ -1,6 +1,10 @@
 from .models import ReportGenerationRequest, ReportOutput, PaperInfo
 from .llm_service import get_llm_completion
-import json # Para formatear datos para los prompts
+import json
+from pathlib import Path
+import asyncio
+import os
+from fastapi import HTTPException
 
 def format_papers_for_prompt(papers: list[PaperInfo]) -> str:
     formatted_papers = []
@@ -221,4 +225,99 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         titulo=report_title,
         referencias=referencias_list,
         cuerpo_texto=full_cuerpo_texto
+    )
+
+async def compile_latex_to_pdf(latex_content: str, working_dir: Path) -> Path:
+    """
+    Compila una cadena de texto LaTeX a un archivo PDF.
+    
+    Args:
+        latex_content: El contenido completo del archivo .tex.
+        working_dir: El directorio temporal donde se realizarán las operaciones.
+
+    Returns:
+        La ruta al archivo PDF generado.
+        
+    Raises:
+        HTTPException: Si la compilación de LaTeX falla.
+    """
+    tex_filename = "report.tex"
+    pdf_filename = "report.pdf"
+    log_filename = "report.log"
+    
+    tex_filepath = working_dir / tex_filename
+    pdf_filepath = working_dir / pdf_filename
+    log_filepath = working_dir / log_filename
+
+    # Escribir el contenido LaTeX al archivo .tex
+    with open(tex_filepath, "w", encoding="utf-8") as f:
+        f.write(latex_content)
+
+    # Comando para compilar con pdflatex
+    # -interaction=nonstopmode: Evita que el proceso se detenga si hay errores menores.
+    # -output-directory: Asegura que todos los archivos de salida vayan al directorio de trabajo.
+    command = [
+        "pdflatex",
+        "-interaction=nonstopmode",
+        f"-output-directory={working_dir}",
+        str(tex_filepath),
+    ]
+
+    # Ejecutar pdflatex. Se recomienda ejecutarlo dos veces para resolver referencias cruzadas (índices, etc.)
+    for i in range(2):
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode != 0:
+            # Si falla la compilación, lee el log para dar un error útil
+            log_content = ""
+            if os.path.exists(log_filepath):
+                with open(log_filepath, "r", encoding="utf-8") as log_file:
+                    log_content = log_file.read()
+            
+            error_detail = {
+                "message": "Falló la compilación de LaTeX.",
+                "return_code": process.returncode,
+                "stdout": stdout.decode(),
+                "stderr": stderr.decode(),
+                "log": log_content[-2000:] # Devuelve los últimos 2000 caracteres del log
+            }
+            raise HTTPException(status_code=500, detail=error_detail)
+
+    if not os.path.exists(pdf_filepath):
+        raise HTTPException(status_code=500, detail="El PDF no fue generado, revisa el log de LaTeX.")
+
+    return pdf_filepath
+
+
+# --- 4. Lógica de Generación de Contenido (tu función, ahora simulada) ---
+def generate_latex_pdf(data: ReportGenerationRequest) -> ReportOutput:
+    """
+    Esta es una versión MOCK de tu función. 
+    En un caso real, aquí irían tus llamadas al LLM.
+    """
+    # Simulamos la salida que tu función original produciría
+    titulo = f"Informe sobre: {data.pregunta_investigacion}"
+    
+    abstract = "Este es el resumen (abstract) del informe. Describe brevemente los objetivos, métodos, resultados y conclusiones principales del estudio."
+    
+    # Unimos las secciones en un solo string de cuerpo
+    cuerpo_partes = [
+        "\\section{Introducción}\nAquí se presenta el contexto del problema, la literatura relevante y las hipótesis.",
+        "\\section{Metodología}\nSe describe el diseño experimental, los materiales y los métodos utilizados.",
+        "\\section{Resultados}\nPresentación objetiva de los hallazgos, a menudo con tablas y figuras.\n\\begin{figure}[h!]\n\\centering\n% \\includegraphics[width=0.8\\textwidth]{placeholder.png}\n\\caption{Ejemplo de figura.}\n\\label{fig:ejemplo}\n\\end{figure}",
+        "\\section{Discusión}\nInterpretación de los resultados, limitaciones y comparación con otros estudios.",
+        "\\section{Conclusión}\nResumen de las conclusiones clave del informe.",
+        "\\section*{Referencias}\n\\begin{thebibliography}{9}\n\\bibitem{knuth1984}\nDonald E. Knuth. \\textit{The TeXbook}. Addison-Wesley Professional, 1984.\n\\end{thebibliography}"
+    ]
+    cuerpo_completo = "\n\n".join(cuerpo_partes)
+
+    return ReportOutput(
+        titulo=titulo,
+        abstract_content=abstract,
+        cuerpo_texto=cuerpo_completo
     )

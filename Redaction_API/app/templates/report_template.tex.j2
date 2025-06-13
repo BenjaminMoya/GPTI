@@ -1,0 +1,43 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PAQUETES ESENCIALES ---
+\usepackage[utf8]{inputenc}       % Codificación de entrada
+\usepackage[T1]{fontenc}          % Codificación de fuentes
+\usepackage[spanish]{babel}       % Soporte para español (acentos, etc.)
+\usepackage{amsmath}              % Fórmulas matemáticas avanzadas
+\usepackage{graphicx}             % Para incluir imágenes
+\usepackage{geometry}             % Para márgenes personalizados
+\usepackage{hyperref}             % Para links clickeables (ej. DOI)
+\usepackage{url}                  % Para formatear URLs
+
+% --- CONFIGURACIÓN DEL DOCUMENTO ---
+\geometry{a4paper, margin=1in} % Márgenes de 2.54cm
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+% --- METADATOS (Variables de Jinja2) ---
+\title{ {{ title }} }
+\author{Generado por el Asistente de Investigación}
+\date{\today}
+
+
+% --- COMIENZO DEL DOCUMENTO ---
+\begin{document}
+
+\maketitle % Crea la página del título
+
+\begin{abstract}
+{{ abstract_content | safe }} % El filtro 'safe' es CRUCIAL para que no escape los backslashes de LaTeX
+\end{abstract}
+
+\tableofcontents % Añade una tabla de contenido
+\newpage
+
+% --- CUERPO DEL INFORME (Variable de Jinja2) ---
+{{ report_body | safe }} % Aquí irá todo el contenido generado (Introducción, Métodos, etc.)
+
+\end{document}

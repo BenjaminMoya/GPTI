@@ -5,7 +5,7 @@ const generateReport = (data) => {
 }
 
 const latexReport = (data) => {
-    return httpCommon.post("/generate-report-pdf/", data);
+    return httpCommon.post("/generate-and-download-pdf/", data);
 }
 
 

@@ -1,27 +1,21 @@
 import React from 'react';
 
-// Iconos simples para usuario y AI (puedes usar imágenes o SVGs más elaborados)
-const UserIcon = () => <div className="avatar user-avatar">U</div>;
-const AiIcon = () => <div className="avatar ai-avatar">R</div>; // R de Robot
-
-function Message({ sender, text, isTyping }) {
-  const isUser = sender === 'user';
+const Message = ({ message }) => {
+  const { sender, text } = message;
+  const isAI = sender === 'ai';
 
   return (
-    <div className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
-      {!isUser && <AiIcon />}
-      <div className={`message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'} ${isTyping ? 'typing-bubble' : ''}`}>
-        {isTyping ? (
-          <div className="typing-indicator">
-            <span></span><span></span><span></span>
-          </div>
-        ) : (
-          text
-        )}
-      </div>
-      {isUser && <UserIcon />}
+    <div className={`message-wrapper ${isAI ? 'ai' : 'user'}`}>
+        <div className={`message-container ${isAI ? 'ai' : 'user'}`}>
+            <div className="message-avatar">
+                {isAI ? '✨' : '👤'}
+            </div>
+            <div className="message-text">
+                {text}
+            </div>
+        </div>
     </div>
   );
-}
+};
 
 export default Message;

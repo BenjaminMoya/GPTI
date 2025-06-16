@@ -1,4 +1,3 @@
-      
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
@@ -25,7 +24,7 @@ class ExperimentationDetails(BaseModel):
     dataset: str
     condiciones: ExperimentationConditions
     repeticiones: int
-    formato: str # "python script o notebook"
+    formato: str 
 
 class DataAnalysisStatistics(BaseModel):
     loss_promedio_con_L2: float
@@ -48,6 +47,11 @@ class ReportOutput(BaseModel):
     titulo: str
     formato: str = "Latex"
     referencias: List[str]
-    cuerpo_texto: str # Contendrá el LaTeX desde \section{Introduccion} hasta \end{thebibliography}
+    cuerpo_texto: str 
 
-    
+
+class ReportBody(BaseModel):
+    cuerpo_texto: str = Field(..., example="\\section{Introducción} Este es un texto de prueba.")
+
+class LatexRequest(BaseModel):
+    latex_content: str = Field(..., description="Un string que contiene un documento LaTeX completo y válido.")

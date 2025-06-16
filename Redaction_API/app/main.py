@@ -1,13 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .models import ReportGenerationRequest, ReportOutput
-from .report_service import generate_latex_report_content
+from .models import ReportGenerationRequest, ReportOutput, ReportBody
+from .report_service import generate_latex_report_content, clean_and_format_latex,compile_latex_to_pdf
 from fastapi.responses import FileResponse
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
-from .report_service import compile_latex_to_pdf
-from .report_service import generate_latex_pdf
-import tempfile
 import os
 
 app = FastAPI(
@@ -21,13 +18,13 @@ jinja_env = Environment(loader=FileSystemLoader(templates_dir))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # o especifica dominios como ["http://localhost:3000"]
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],  # o ["GET", "POST", "PUT", "DELETE"]
-    allow_headers=["*"],  # o ["Authorization", "Content-Type"]
+    allow_methods=["*"],  
+    allow_headers=["*"], 
 )
 # Verifica si la API key está cargada al inicio
-# (llm_service ya lo hace, pero una verificación aquí puede ser útil)
+
 if not os.getenv("OPENROUTER_API_KEY"):
     print("ADVERTENCIA: OPENROUTER_API_KEY no está configurada. La API fallará.")
 
@@ -56,51 +53,36 @@ async def create_report(request_data: ReportGenerationRequest):
         # Loggear el error en un sistema real
         print(f"Error durante la generación del informe: {e}")
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
-
-@app.post("/generate-report-pdf/", response_class=FileResponse)
-async def create_report_pdf(request_data: ReportGenerationRequest):
-    """
-    Recibe los datos para un informe, genera el contenido LaTeX, lo compila
-    y devuelve el archivo PDF resultante.
-    """
-    # Paso A: Generar el contenido del informe (título, abstract, cuerpo)
-    report_content = generate_latex_pdf(request_data)
-
-    # Paso B: Cargar la plantilla Jinja2
-    template = jinja_env.get_template("report_template.tex.j2")
-
-    # Paso C: Renderizar la plantilla con el contenido generado
-    full_latex_string = template.render(
-        title=report_content.titulo,
-        abstract_content=report_content.abstract_content,
-        report_body=report_content.cuerpo_texto
-    )
     
-    # Paso D: Usar un directorio temporal para la compilación
-    # Esto es crucial para manejar múltiples peticiones a la vez sin conflictos de archivos
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir_path = Path(temp_dir)
+@app.post("/generate-and-download-pdf", response_class=FileResponse)
+async def generate_and_download_pdf(report_body: ReportBody):
+    """
+    Endpoint principal que recibe LaTeX, lo limpia, lo compila y devuelve el PDF.
+    """
+    try:
+        # 1. Limpiar y formatear el LaTeX usando la IA
+        full_latex_code = clean_and_format_latex(report_body.cuerpo_texto)
         
-        # Paso E: Compilar el LaTeX a PDF
-        try:
-            pdf_path = await compile_latex_to_pdf(full_latex_string, temp_dir_path)
-            
-            # Paso F: Devolver el PDF como una respuesta de archivo.
-            # FastAPI se encargará de limpiar el FileResponse. El directorio temporal se limpia automáticamente al salir del `with`.
-            return FileResponse(
-                path=pdf_path,
-                filename="scientific_report.pdf",
-                media_type="application/pdf"
-            )
-        except HTTPException as e:
-            # Re-lanzar la excepción para que FastAPI la maneje
+        # 2. Compilar el LaTeX a PDF
+        pdf_path = compile_latex_to_pdf(full_latex_code, "reporte_generado")
+
+        # 3. Devolver el archivo PDF para su descarga
+        return FileResponse(
+            path=pdf_path,
+            media_type='application/pdf',
+            filename='reporte_final.pdf' # Nombre que verá el usuario al descargar
+        )
+    except (FileNotFoundError, RuntimeError, HTTPException) as e:
+        # Manejar errores específicos y devolver una respuesta clara
+        if isinstance(e, HTTPException):
             raise e
-        except Exception as e:
-            # Capturar cualquier otro error inesperado
-            raise HTTPException(status_code=500, detail=f"Un error inesperado ocurrió: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        # Captura de cualquier otro error inesperado
+        print(f"Error inesperado: {e}")
+        raise HTTPException(status_code=500, detail="Ocurrió un error interno inesperado.")
+
 
 if __name__ == "__main__":
     import uvicorn
-    # Para desarrollo, puedes correrlo directamente.
-    # Para producción, usa un servidor ASGI como Uvicorn o Hypercorn con Gunicorn.
     uvicorn.run(app, host="0.0.0.0", port=8000)

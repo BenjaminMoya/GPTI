@@ -1,10 +1,10 @@
 from .models import ReportGenerationRequest, ReportOutput, PaperInfo
 from .llm_service import get_llm_completion
 import json
-from pathlib import Path
-import asyncio
 import os
-from fastapi import HTTPException
+import subprocess
+import tempfile
+import shutil
 
 def format_papers_for_prompt(papers: list[PaperInfo]) -> str:
     formatted_papers = []
@@ -66,7 +66,7 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
     Instrucciones para LaTeX:
     - Comienza con "\\section*{{Resumen}}" (o Abstract).
     - Sé conciso y cubre los puntos clave: introducción breve, objetivos, métodos, resultados principales y conclusión principal.
-    - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
+    - Incluye "\\documentclass", "\\begin{{document}}" o comandos similares, considerando que es el inicio del documento.
     - El idioma es español.
     """
     abstract_content = get_llm_completion(prompt_abstract)
@@ -216,6 +216,7 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
     references_section += "\\begin{thebibliography}{99}\n" # El 99 es un placeholder para el item más largo
     references_section += "\n".join(bib_items)
     references_section += "\n\\end{thebibliography}\n"
+    references_section += "\n\\end{document}"
     cuerpo_texto_parts.append(references_section)
 
 
@@ -227,97 +228,134 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         cuerpo_texto=full_cuerpo_texto
     )
 
-async def compile_latex_to_pdf(latex_content: str, working_dir: Path) -> Path:
+def clean_and_format_latex(cuerpo_texto: str) -> str:
     """
-    Compila una cadena de texto LaTeX a un archivo PDF.
-    
+    Verifica si un string LaTeX es un documento completo y, si no lo es,
+    lo arregla añadiendo la estructura necesaria para que sea compilable.
+
+    Usa un LLM con instrucciones específicas para:
+    1. Identificar si el texto es un fragmento o un documento completo.
+    2. Si es un fragmento, lo envuelve en un preámbulo estándar y el entorno document.
+    3. Si ya es un documento completo, lo devuelve sin cambios o con correcciones sintácticas menores.
+    4. Asegura que la salida sea solo código LaTeX puro.
+
     Args:
-        latex_content: El contenido completo del archivo .tex.
-        working_dir: El directorio temporal donde se realizarán las operaciones.
+        cuerpo_texto: El string con el contenido LaTeX a verificar y arreglar.
+
+    Returns:
+        Un string con el documento LaTeX completo y listo para compilar.
+    """
+    print(">>> Verificando y arreglando estructura LaTeX con IA...")
+
+    # Instrucciones detalladas para la IA.
+    system_message = (
+        "Eres un asistente experto en LaTeX. Tu tarea es analizar el texto LaTeX proporcionado "
+        "y asegurarte de que tenga la estructura de un documento completo y compilable. "
+        "Reglas a seguir:\n"
+        "1. Si el texto de entrada ya es un documento completo (tiene \\documentclass, \\begin{document}, "
+        "y \\end{document}), devuélvelo tal cual. No lo modifiques a menos que encuentres un error de sintaxis obvio.\n"
+        "2. Si el texto es solo un fragmento (por ejemplo, una sección, una tabla, o simple texto), "
+        "DEBES envolverlo en la estructura mínima para que sea compilable. Usa \\documentclass{article} y los paquetes "
+        "básicos como 'amsmath', 'graphicx', y 'babel' con la opción 'spanish'.\n"
+        "3. Es crucial que NO alteres, elimines ni agregues contenido sustancial al texto original del usuario. "
+        "Tu única misión es añadir la 'plantilla' o 'envoltura' estructural si falta.\n"
+        "4. Tu respuesta DEBE contener ÚNICAMENTE el código LaTeX final. No incluyas explicaciones, "
+        "comentarios, saludos, ni frases como 'Aquí está el código corregido:'."
+    )
+
+    # El prompt que le pasamos al modelo.
+    user_prompt = (
+        "Por favor, verifica y, si es necesario, arregla la estructura del siguiente texto LaTeX "
+        "para que sea un documento compilable, siguiendo estrictamente las reglas que te he dado.\n\n"
+        f"Texto LaTeX a procesar:\n---\n{cuerpo_texto}\n---"
+    )
+
+    # Llamada a la función LLM que ya teníamos.
+    fixed_latex = get_llm_completion(user_prompt, system_message)
+
+    # Post-procesamiento para eliminar los 'code fences' de Markdown si el LLM los añade.
+    if fixed_latex.startswith("```latex"):
+        fixed_latex = fixed_latex.removeprefix("```latex").strip()
+    if fixed_latex.endswith("```"):
+        fixed_latex = fixed_latex.removesuffix("```").strip()
+
+    print(">>> Estructura LaTeX verificada y corregida.")
+    ended = fixed_latex + "\n\\end{document}"
+    print(ended)
+    return ended
+
+def compile_latex_to_pdf(latex_content: str, output_filename: str = "reporte") -> str:
+    """
+    Compila un string de LaTeX a un archivo PDF usando pdflatex.
+
+    Crea un directorio temporal para manejar los archivos de compilación (.aux, .log).
+    Guarda el PDF final en un directorio 'generated_pdfs'.
+
+    Args:
+        latex_content: El string del documento LaTeX completo.
+        output_filename: El nombre del archivo PDF sin la extensión.
 
     Returns:
         La ruta al archivo PDF generado.
-        
+    
     Raises:
-        HTTPException: Si la compilación de LaTeX falla.
+        FileNotFoundError: Si el comando 'pdflatex' no se encuentra en el sistema.
+        RuntimeError: Si la compilación de LaTeX falla.
     """
-    tex_filename = "report.tex"
-    pdf_filename = "report.pdf"
-    log_filename = "report.log"
-    
-    tex_filepath = working_dir / tex_filename
-    pdf_filepath = working_dir / pdf_filename
-    log_filepath = working_dir / log_filename
-
-    # Escribir el contenido LaTeX al archivo .tex
-    with open(tex_filepath, "w", encoding="utf-8") as f:
-        f.write(latex_content)
-
-    # Comando para compilar con pdflatex
-    # -interaction=nonstopmode: Evita que el proceso se detenga si hay errores menores.
-    # -output-directory: Asegura que todos los archivos de salida vayan al directorio de trabajo.
-    command = [
-        "pdflatex",
-        "-interaction=nonstopmode",
-        f"-output-directory={working_dir}",
-        str(tex_filepath),
-    ]
-
-    # Ejecutar pdflatex. Se recomienda ejecutarlo dos veces para resolver referencias cruzadas (índices, etc.)
-    for i in range(2):
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+    if not shutil.which("pdflatex"):
+        raise FileNotFoundError(
+            "El comando 'pdflatex' no se encuentra. "
+            "Asegúrate de tener una distribución de LaTeX instalada (MiKTeX, TeX Live, MacTeX)."
         )
-        stdout, stderr = await process.communicate()
 
-        if process.returncode != 0:
-            # Si falla la compilación, lee el log para dar un error útil
-            log_content = ""
-            if os.path.exists(log_filepath):
-                with open(log_filepath, "r", encoding="utf-8") as log_file:
+    # Crear un directorio para los PDFs generados si no existe
+    output_dir = "generated_pdfs"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Usar un directorio temporal para los archivos de compilación sucios (.tex, .aux, .log)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        source_path = os.path.join(temp_dir, "source.tex")
+        
+        # Escribir el contenido LaTeX al archivo .tex
+        with open(source_path, "w", encoding="utf-8") as f:
+            f.write(latex_content)
+        
+        print(f">>> Compilando {source_path}...")
+        
+        # Comando para compilar. Usamos -output-directory para mantener limpio el CWD.
+        command = [
+            "pdflatex",
+            "-interaction=nonstopmode",  # No pedir input en caso de error
+            "-output-directory", temp_dir,
+            source_path
+        ]
+        
+        try:
+            # Se recomienda ejecutar pdflatex dos veces para resolver referencias cruzadas
+            subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
+            print(">>> Primera pasada de compilación completa.")
+            subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
+            print(">>> Segunda pasada de compilación completa.")
+        
+        except subprocess.CalledProcessError as e:
+            print("!!! ERROR DE COMPILACIÓN DE LATEX !!!")
+            # El log de error es crucial para depurar
+            log_path = os.path.join(temp_dir, "source.log")
+            if os.path.exists(log_path):
+                with open(log_path, "r", encoding="utf-8") as log_file:
                     log_content = log_file.read()
+                print(f"--- Contenido del log ({log_path}) ---\n{log_content[-2000:]}") # Últimos 2000 caracteres
             
-            error_detail = {
-                "message": "Falló la compilación de LaTeX.",
-                "return_code": process.returncode,
-                "stdout": stdout.decode(),
-                "stderr": stderr.decode(),
-                "log": log_content[-2000:] # Devuelve los últimos 2000 caracteres del log
-            }
-            raise HTTPException(status_code=500, detail=error_detail)
+            raise RuntimeError(f"Falló la compilación de LaTeX. Revisa el log para más detalles. Error: {e.stderr}")
 
-    if not os.path.exists(pdf_filepath):
-        raise HTTPException(status_code=500, detail="El PDF no fue generado, revisa el log de LaTeX.")
-
-    return pdf_filepath
-
-
-# --- 4. Lógica de Generación de Contenido (tu función, ahora simulada) ---
-def generate_latex_pdf(data: ReportGenerationRequest) -> ReportOutput:
-    """
-    Esta es una versión MOCK de tu función. 
-    En un caso real, aquí irían tus llamadas al LLM.
-    """
-    # Simulamos la salida que tu función original produciría
-    titulo = f"Informe sobre: {data.pregunta_investigacion}"
-    
-    abstract = "Este es el resumen (abstract) del informe. Describe brevemente los objetivos, métodos, resultados y conclusiones principales del estudio."
-    
-    # Unimos las secciones en un solo string de cuerpo
-    cuerpo_partes = [
-        "\\section{Introducción}\nAquí se presenta el contexto del problema, la literatura relevante y las hipótesis.",
-        "\\section{Metodología}\nSe describe el diseño experimental, los materiales y los métodos utilizados.",
-        "\\section{Resultados}\nPresentación objetiva de los hallazgos, a menudo con tablas y figuras.\n\\begin{figure}[h!]\n\\centering\n% \\includegraphics[width=0.8\\textwidth]{placeholder.png}\n\\caption{Ejemplo de figura.}\n\\label{fig:ejemplo}\n\\end{figure}",
-        "\\section{Discusión}\nInterpretación de los resultados, limitaciones y comparación con otros estudios.",
-        "\\section{Conclusión}\nResumen de las conclusiones clave del informe.",
-        "\\section*{Referencias}\n\\begin{thebibliography}{9}\n\\bibitem{knuth1984}\nDonald E. Knuth. \\textit{The TeXbook}. Addison-Wesley Professional, 1984.\n\\end{thebibliography}"
-    ]
-    cuerpo_completo = "\n\n".join(cuerpo_partes)
-
-    return ReportOutput(
-        titulo=titulo,
-        abstract_content=abstract,
-        cuerpo_texto=cuerpo_completo
-    )
+        # Mover el PDF generado del directorio temporal al directorio de salida final
+        generated_pdf_temp_path = os.path.join(temp_dir, "source.pdf")
+        final_pdf_path = os.path.join(output_dir, f"{output_filename}.pdf")
+        
+        if not os.path.exists(generated_pdf_temp_path):
+             raise RuntimeError("La compilación de LaTeX no produjo un archivo PDF.")
+             
+        shutil.move(generated_pdf_temp_path, final_pdf_path)
+        print(f">>> PDF generado y guardado en: {final_pdf_path}")
+        
+        return final_pdf_path

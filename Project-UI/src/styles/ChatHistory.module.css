@@ -1,0 +1,34 @@
+.chatHistory {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.message {
+  display: flex;
+  gap: 16px;
+  max-width: 80%;
+}
+
+.avatar {
+  flex-shrink: 0;
+  color: var(--secondary-text-color);
+}
+
+.content {
+  background-color: transparent;
+  padding: 1px;
+}
+
+.content p {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.user {
+  align-self: flex-start; /* En AI Studio el user también está a la izquierda */
+}

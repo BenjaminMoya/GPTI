@@ -1,0 +1,116 @@
+.sidebar {
+  width: 300px;
+  background-color: var(--surface-color);
+  padding: 16px;
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--bg-color);
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+  color: var(--primary-text-color);
+}
+
+.modelSelector {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: var(--input-bg-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.setting {
+  margin-bottom: 16px;
+}
+
+.setting label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--secondary-text-color);
+}
+
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sliderContainer input[type="range"] {
+  flex-grow: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  outline: none;
+}
+
+.sliderContainer input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-color);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.sliderContainer input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--accent-color);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+
+.safetyButton {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.safetyButton:hover {
+  background-color: rgba(138, 180, 248, 0.1);
+}
+
+.languageList {
+  margin-top: 8px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #1f1f1f;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.languageItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.languageItem:hover {
+  background-color: #2e2e2e;
+}

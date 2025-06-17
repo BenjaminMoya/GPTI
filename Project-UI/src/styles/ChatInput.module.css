@@ -1,0 +1,88 @@
+.chatInputContainer {
+  padding: 16px 24px;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--input-bg-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--accent-color);
+}
+
+.inputWrapper textarea {
+  flex-grow: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--primary-text-color);
+  font-family: inherit;
+  font-size: 1rem;
+  resize: none;
+  max-height: 200px;
+  line-height: 1.5;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sendButton {
+  background: none;
+  border: none;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sendButton:hover {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+.disclaimer {
+  font-size: 0.75rem;
+  color: var(--secondary-text-color);
+  text-align: center;
+  margin-top: 12px;
+}
+
+.promptCarousel {
+  height: 1.5rem; /* altura fija */
+  overflow: hidden;
+  position: absolute;
+  top: -1.8rem;
+  left: 0;
+  width: 100%;
+  color: #aaa;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.promptList {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.5s ease-in-out;
+}
+
+.promptItem {
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  padding-left: 0.5rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+

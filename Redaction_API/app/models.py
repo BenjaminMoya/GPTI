@@ -37,6 +37,7 @@ class DataAnalysisResults(BaseModel):
     estadisticas: DataAnalysisStatistics
 
 class ReportGenerationRequest(BaseModel):
+    lenguage: str = Field(..., example="Spanish")
     pregunta_investigacion: str = Field(..., example="¿Cómo afecta la regularización L2 al rendimiento de redes neuronales?")
     info_papers: List[PaperInfo]
     formulacion_hipotesis: List[HypothesisItem]

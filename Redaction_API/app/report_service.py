@@ -21,9 +21,9 @@ def format_hypotheses_for_prompt(hypotheses: list[dict]) -> str:
         formatted.append(f"- Hipótesis: {h['hipotesis']}\n  Justificación: {h['justificacion']}")
     return "\n".join(formatted)
 
-def generate_report_title(pregunta_investigacion: str, experimentacion: dict, analisis_datos: dict) -> str:
+def generate_report_title(pregunta_investigacion: str, experimentacion: dict, analisis_datos: dict, lenguage: str) -> str:
     prompt = f"""
-    Basado en la siguiente pregunta de investigación, detalles experimentales y resultados, genera un título conciso y académico para un informe científico.
+    Basado en la siguiente pregunta de investigación, detalles experimentales y resultados, genera un título conciso y académico para un informe científico en {lenguage}.
     Pregunta de Investigación: {pregunta_investigacion}
     Modelo experimental: {experimentacion.modelo}
     Resultados clave: {analisis_datos.resumen}
@@ -48,12 +48,12 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
 
     # 1. Título (generado por LLM o basado en la pregunta)
     # report_title = f"Evaluación de: {data.pregunta_investigacion}" # Simple
-    report_title = generate_report_title(data.pregunta_investigacion, data.experimentacion, data.analisis_datos)
+    report_title = generate_report_title(data.pregunta_investigacion, data.experimentacion, data.analisis_datos, data.lenguage)
 
 
     # 2. Resumen (Abstract)
     prompt_abstract = f"""
-    Tarea: Escribe el RESUMEN (Abstract) para un informe científico en formato LaTeX.
+    Tarea: Escribe el RESUMEN (Abstract) para un informe científico en formato LaTeX en {data.lenguage}.
     El informe trata sobre: "{data.pregunta_investigacion}".
     Información clave del estudio:
     Hipótesis principales:
@@ -67,14 +67,14 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
     - Comienza con "\\section*{{Resumen}}" (o Abstract).
     - Sé conciso y cubre los puntos clave: introducción breve, objetivos, métodos, resultados principales y conclusión principal.
     - Incluye "\\documentclass", "\\begin{{document}}" o comandos similares, considerando que es el inicio del documento.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     abstract_content = get_llm_completion(prompt_abstract)
     cuerpo_texto_parts.append(abstract_content)
 
     # 3. Introducción
     prompt_intro = f"""
-    Tarea: Escribe la sección de INTRODUCCIÓN para un informe científico en formato LaTeX.
+    Tarea: Escribe la sección de INTRODUCCIÓN para un informe científico en formato LaTeX en {data.lenguage}.
     Pregunta de investigación central: "{data.pregunta_investigacion}"
     Información de artículos de referencia para contextualizar (menciónalos si es relevante, ej. Smith et al., 2021):
     {info_papers_str}
@@ -89,14 +89,14 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         3. Declaración del problema específico o pregunta de investigación.
         4. Objetivos del estudio y presentación de las hipótesis.
     - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     intro_content = get_llm_completion(prompt_intro)
     cuerpo_texto_parts.append(intro_content)
 
     # 4. Metodología
     prompt_methods = f"""
-    Tarea: Escribe la sección de METODOLOGÍA (o Materiales y Métodos) para un informe científico en formato LaTeX.
+    Tarea: Escribe la sección de METODOLOGÍA (o Materiales y Métodos) para un informe científico en formato LaTeX en {data.lenguage}.
     Detalles de la experimentación:
     {experimentacion_str}
     La pregunta de investigación que guía estos métodos es: "{data.pregunta_investigacion}"
@@ -109,14 +109,14 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         - Condiciones experimentales (regularización: {data.experimentacion.condiciones.regularizacion}, epochs: {data.experimentacion.condiciones.epochs}, métricas: {', '.join(data.experimentacion.condiciones.metricas)}).
         - Número de repeticiones ({data.experimentacion.repeticiones}).
     - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     methods_content = get_llm_completion(prompt_methods)
     cuerpo_texto_parts.append(methods_content)
 
     # 5. Resultados
     prompt_results = f"""
-    Tarea: Escribe la sección de RESULTADOS para un informe científico en formato LaTeX.
+    Tarea: Escribe la sección de RESULTADOS para un informe científico en formato Latex en {data.lenguage}.
     Análisis de datos y hallazgos:
     {analisis_datos_str}
     Los gráficos generados son: {', '.join(data.analisis_datos.graficos_generados)}. Debes mencionarlos e incluir placeholders para ellos.
@@ -134,14 +134,14 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
       \\end{{figure}}
     - Adapta los nombres de archivo y captions para '{', '.join(data.analisis_datos.graficos_generados)}'.
     - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     results_content = get_llm_completion(prompt_results)
     cuerpo_texto_parts.append(results_content)
 
     # 6. Discusión
     prompt_discussion = f"""
-    Tarea: Escribe la sección de DISCUSIÓN para un informe científico en formato LaTeX.
+    Tarea: Escribe la sección de DISCUSIÓN para un informe científico en formato LaTeX en {data.lenguage}.
     Pregunta de investigación: "{data.pregunta_investigacion}"
     Hipótesis planteadas:
     {hypotheses_str}
@@ -159,14 +159,14 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         3. Menciona las limitaciones del estudio.
         4. Sugiere implicaciones y posibles trabajos futuros.
     - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     discussion_content = get_llm_completion(prompt_discussion)
     cuerpo_texto_parts.append(discussion_content)
 
     # 7. Conclusión
     prompt_conclusion = f"""
-    Tarea: Escribe la sección de CONCLUSIÓN para un informe científico en formato LaTeX.
+    Tarea: Escribe la sección de CONCLUSIÓN para un informe científico en formato LaTeX en {data.lenguage}.
     Basado en la pregunta "{data.pregunta_investigacion}" y los resultados principales resumidos en: "{data.analisis_datos.resumen}".
     Las hipótesis eran:
     {hypotheses_str}
@@ -177,7 +177,7 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
     - Responde directamente a la pregunta de investigación.
     - Evita introducir nueva información o interpretación no presente en la discusión.
     - No incluyas "\\documentclass", "\\begin{{document}}" o comandos similares. Solo el contenido de la sección.
-    - El idioma es español.
+    - El idioma es {data.lenguage}.
     """
     conclusion_content = get_llm_completion(prompt_conclusion)
     cuerpo_texto_parts.append(conclusion_content)
@@ -256,7 +256,7 @@ def clean_and_format_latex(cuerpo_texto: str) -> str:
         "y \\end{document}), devuélvelo tal cual. No lo modifiques a menos que encuentres un error de sintaxis obvio.\n"
         "2. Si el texto es solo un fragmento (por ejemplo, una sección, una tabla, o simple texto), "
         "DEBES envolverlo en la estructura mínima para que sea compilable. Usa \\documentclass{article} y los paquetes "
-        "básicos como 'amsmath', 'graphicx', y 'babel' con la opción 'spanish'.\n"
+        "básicos como 'amsmath', 'graphicx', y 'babel'.\n"
         "3. Es crucial que NO alteres, elimines ni agregues contenido sustancial al texto original del usuario. "
         "Tu única misión es añadir la 'plantilla' o 'envoltura' estructural si falta.\n"
         "4. Tu respuesta DEBE contener ÚNICAMENTE el código LaTeX final. No incluyas explicaciones, "

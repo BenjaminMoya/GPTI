@@ -1,0 +1,73 @@
+.sidebar {
+  width: 260px;
+  background-color: var(--surface-color);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.menuIcon {
+  cursor: pointer;
+  color: var(--secondary-text-color);
+  margin-right: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.newChatButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: var(--input-bg-color);
+  color: var(--accent-color);
+  border: none;
+  border-radius: 24px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: background-color 0.2s;
+}
+
+.newChatButton:hover {
+  background-color: #3c4043;
+}
+
+.recent {
+  flex-grow: 1;
+}
+
+.recentTitle {
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+  margin-bottom: 12px;
+  padding-left: 12px;
+}
+
+.recent ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recent li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: var(--primary-text-color);
+}

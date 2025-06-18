@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styles from '../styles/LeftSidebar.module.css';
 import { FiTrash,FiPlus, FiMessageSquare, FiMenu } from 'react-icons/fi';
 import { DiGoogleCloudPlatform } from 'react-icons/di';
@@ -39,13 +39,13 @@ function LeftSidebar({ promptHistory }) {
       <div className={styles.recent}>
         <h3 className={styles.recentTitle}>Recent</h3>
         <ul>
-          {promptHistory.map((item, index) => (
-            <li key={index}>
-              <FiMessageSquare size={16} />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+  {(promptHistory ?? []).map((item, index) => (
+    <li key={index}>
+      <FiMessageSquare size={16} />
+      <span>{item}</span>
+    </li>
+  ))}
+</ul>
       </div>
       <div className={styles.footer}>
         {/* Aquí podrían ir otros links como 'Get API Key', etc. */}

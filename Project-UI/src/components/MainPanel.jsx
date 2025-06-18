@@ -39,10 +39,11 @@ function MainPanel({ promptHistory, setPromptHistory }) {
     return () => clearInterval(interval);
   }, [lenguage, initial]);
 
-  const extractLatexBlock = (text) =>{
+  const extractLatexBlock = (text) => {
+    if (typeof text !== 'string') return '';
     const match = text.match(/```latex\n([\s\S]*?)```/);
     return match ? match[1].trim() : text.trim();
-  }
+  };
 
   const handleSend = async () => {
   if (input.trim() === '') return;
@@ -120,10 +121,15 @@ function MainPanel({ promptHistory, setPromptHistory }) {
         
         console.log("Cuerpo del texto:", body);
 
+        if (!onlyLatex || typeof onlyLatex !== 'string') {
+          console.error("Error: El contenido LaTeX no es válido", onlyLatex);
+          return;
+        }
+
         const onlyLatex = extractLatexBlock(body);
 
         const latex = {
-          cuerpo_texto: onlyLatex
+          cuerpo_texto: onlyLatex.trim()
         };
 
         console.log("Texto LaTeX extraído:", latex);

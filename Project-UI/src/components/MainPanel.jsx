@@ -39,6 +39,11 @@ function MainPanel({ promptHistory, setPromptHistory }) {
     return () => clearInterval(interval);
   }, [lenguage, initial]);
 
+  const extractLatexBlock = (text) =>{
+    const match = text.match(/```latex\n([\s\S]*?)```/);
+    return match ? match[1].trim() : text.trim();
+  }
+
   const handleSend = async () => {
   if (input.trim() === '') return;
 
@@ -108,18 +113,29 @@ function MainPanel({ promptHistory, setPromptHistory }) {
     };
 
     console.log("Respuesta del modelo:", response.data);
+    
+    const body = response.data.cuerpo_texto;
 
-    const body = response.data.cuerpo_texto
     try {
         
-        const response = await latexReport(body);
+        console.log("Cuerpo del texto:", body);
+
+        const onlyLatex = extractLatexBlock(body);
+
+        const latex = {
+          cuerpo_texto: onlyLatex
+        };
+
+        console.log("Texto LaTeX extraído:", latex);
+        
+        const response2 = await latexReport(latex);
 
         const responseMessage = {
-            text: "Respuesta en consola",
+            text: "Texto generado correctamente. Puedes descargar el archivo LaTeX.",
             sender: 'model'
         };
 
-        console.log("Respuesta del modelo:", response.data);
+        console.log("Texto limpio:", response2.data);
 
         setMessages(prev => {
       // Reemplaza el "Escribiendo..." por la respuesta real

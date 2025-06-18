@@ -228,6 +228,7 @@ def generate_latex_report_content(data: ReportGenerationRequest) -> ReportOutput
         cuerpo_texto=full_cuerpo_texto
     )
 
+
 def clean_and_format_latex(cuerpo_texto: str) -> str:
     """
     Verifica si un string LaTeX es un documento completo y, si no lo es,
@@ -245,6 +246,7 @@ def clean_and_format_latex(cuerpo_texto: str) -> str:
     Returns:
         Un string con el documento LaTeX completo y listo para compilar.
     """
+    
     print(">>> Verificando y arreglando estructura LaTeX con IA...")
 
     # Instrucciones detalladas para la IA.
